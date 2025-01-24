@@ -3,7 +3,7 @@ from django.templatetags.static import static
 import json
 
 
-from .models import Product
+from .models import Product, Customer, OrderItem
 
 
 def banners_list_api(request):
@@ -59,8 +59,29 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # TODO это лишь заглушка
     if request.method == 'POST':
         data = json.loads(request.body.decode())
-        print(data)
+
+        # Получаем или создаем клиента
+        customer, created = Customer.objects.get_or_create(
+            first_name=data['firstname'],
+            last_name=data['lastname'],
+            phone_number=data['phonenumber'],
+        )
+        # Проверяем наличие адреса
+        address = data.get('address')
+        if not address:
+            return JsonResponse({'error': 'Address is required'}, status=400)
+
+        # Создаем элементы заказа напрямую, используя ID продуктов из заказа
+        order_items = [
+            OrderItem(
+                product_id=user_order['product'],
+                quantity=user_order['quantity'],
+                customer=customer
+            )
+            for user_order in data['products']
+        ]
+
+        OrderItem.objects.bulk_create(order_items)
     return JsonResponse({})
