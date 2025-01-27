@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
-import json
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 from .models import (Product, Order, OrderItem)
@@ -58,41 +60,40 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
-    if request.method == 'POST':
-        data = json.loads(request.body.decode())
+    data = request.data
+    print(data)
 
-        # Проверяем наличие необходимых данных перед созданием заказа
-        required_fields = {
-            'firstname': 'First name is required',
-            'address': 'Address is required',
-            'phonenumber': 'Phone number is required'
-        }
+    # Проверяем наличие необходимых данных перед созданием заказа
+    required_fields = {
+        'firstname': 'First name is required',
+        'address': 'Address is required',
+        'phonenumber': 'Phone number is required'
+    }
 
-        for field, error_message in required_fields.items():
-            if not data.get(field):
-                return JsonResponse({'error': error_message}, status=400)
+    for field, error_message in required_fields.items():
+        if not data.get(field):
+            return JsonResponse({'error': error_message}, status=400)
 
-        # Получаем или создаем клиента(заказ)
-        order, created = Order.objects.get_or_create(
-            first_name=data['firstname'],
-            last_name=data['lastname'],
-            phone_number=data['phonenumber'],
-            address=data.get('address')
+    # Получаем или создаем клиента(заказ)
+    order, created = Order.objects.get_or_create(
+        first_name=data['firstname'],
+        last_name=data['lastname'],
+        phone_number=data['phonenumber'],
+        address=data.get('address')
+    )
+
+    # Создаем элементы заказа напрямую, используя ID продуктов из заказа
+    order_items = [
+        OrderItem(
+            order=order,
+            product_id=user_order['product'],
+            quantity=user_order['quantity'],
+
         )
+        for user_order in data['products']
+    ]
 
-        # Создаем элементы заказа напрямую, используя ID продуктов из заказа
-        order_items = [
-            OrderItem(
-                order=order,
-                product_id=user_order['product'],
-                quantity=user_order['quantity'],
-
-            )
-            for user_order in data['products']
-        ]
-
-        OrderItem.objects.bulk_create(order_items)
-        return JsonResponse({'success': 'Order registered successfully'})
-
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    OrderItem.objects.bulk_create(order_items)
+    return Response(data)
