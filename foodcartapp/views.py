@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import (Product, Order, OrderItem)
+from phonenumbers import parse, is_valid_number
+from phonenumbers.phonenumberutil import NumberParseException
 
 
 def banners_list_api(request):
@@ -70,16 +72,27 @@ def validate_order_data(data):
         Returns:
             Response: A Response object with an error message and status code if validation fails.
         """
-    # Проверяем наличие необходимых данных в карточке заказчика
-    required_fields = {
-        'firstname': 'First name is required',
-        'address': 'Address is required',
-        'phonenumber': 'Phone number is required'
-    }
 
-    for field, error_message in required_fields.items():
-        if not data.get(field):
-            return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
+    # Проверяем наличие необходимых данных в карточке заказчика
+    string_fields = ['firstname', 'lastname', 'phonenumber']
+    for field in string_fields:
+        if not isinstance(data.get(field), str):
+            return Response(
+                {"error": f"The key '{field}' is not specified or not str."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    # Валидация номера телефона
+    try:
+        phonenumber = data.get("phonenumber")
+        parsed_number = parse(phonenumber)
+        if not is_valid_number(parsed_number):
+            raise ValueError("The phonenumber is not valid")
+    except (NumberParseException, ValueError):
+        return Response(
+            {"error": "The phonenumber is not valid"},
+            status=status.HTTP_406_NOT_ACCEPTABLE
+        )
 
     # Проверяем данные о продуктах
     if "products" not in data:
@@ -105,6 +118,14 @@ def validate_order_data(data):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Проверяем наличие необходимых данных в карточке продукта
+    product_ids = [product['product'] for product in products]
+    existing_products = Product.objects.filter(id__in=product_ids)
+    if len(product_ids) != len(existing_products):
+        return Response(
+            {"error": "products: Не все продукты с таким ID существуют"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     return None
 
 
