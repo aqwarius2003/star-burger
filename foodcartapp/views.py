@@ -3,7 +3,7 @@ from django.templatetags.static import static
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from rest_framework import status
 
 from .models import (Product, Order, OrderItem)
 
@@ -60,12 +60,17 @@ def product_list_api(request):
     })
 
 
-@api_view(['POST'])
-def register_order(request):
-    data = request.data
-    print(data)
+def validate_order_data(data):
+    """
+        Validates the incoming order data for required fields and correct data types.
 
-    # Проверяем наличие необходимых данных перед созданием заказа
+        Args:
+            data (dict): The data dictionary from the request.
+
+        Returns:
+            Response: A Response object with an error message and status code if validation fails.
+        """
+    # Проверяем наличие необходимых данных в карточке заказчика
     required_fields = {
         'firstname': 'First name is required',
         'address': 'Address is required',
@@ -74,8 +79,42 @@ def register_order(request):
 
     for field, error_message in required_fields.items():
         if not data.get(field):
-            return JsonResponse({'error': error_message}, status=400)
+            return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Проверяем данные о продуктах
+    if "products" not in data:
+        return Response(
+            {"error": "products: Обязательное поле."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    products = data.get("products")
+
+    if products is None:
+        return Response(
+            {"error": "products: Это поле не может быть пустым."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not isinstance(products, list):
+        return Response(
+            {"error": f"products: Ожидался list со значениями, но был получен {type(products).__name__}."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if not products:
+        return Response(
+            {"error": "products: Этот список не может быть пустым."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return None
+
+
+@api_view(['POST'])
+def register_order(request):
+    data = request.data
+
+    error = validate_order_data(data)
+    if error:
+        return error
     # Получаем или создаем клиента(заказ)
     order, created = Order.objects.get_or_create(
         first_name=data['firstname'],
