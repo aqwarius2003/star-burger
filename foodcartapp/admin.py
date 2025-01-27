@@ -4,7 +4,7 @@ from django.templatetags.static import static
 from django.utils.html import format_html
 
 from .models import (
-    Customer,
+    Order,
     OrderItem,
     Restaurant,
     Product,
@@ -123,17 +123,20 @@ class OrderItemInline(admin.TabularInline):
     short_description = 'Заказанные товары'
 
 
-@admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderItemInline
     ]
+    list_display = [
+        'first_name',
+        'last_name',
+        'address',
+    ]
 
 
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = (
-        'customer',
-        'product',
-        'quantity',
-    )
+# @admin.register(OrderItem)
+# class OrderItemAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'order',
+#     )

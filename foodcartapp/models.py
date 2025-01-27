@@ -125,10 +125,11 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
-class Customer(models.Model):
+class Order(models.Model):
     first_name = models.CharField(
         verbose_name='Имя',
-        max_length=25
+        max_length=25,
+
     )
 
     last_name = models.CharField(
@@ -148,46 +149,35 @@ class Customer(models.Model):
 
     class Meta:
         verbose_name = 'заказчик'
-        verbose_name_plural = 'заказчики'
+        verbose_name_plural = 'Заказы'
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} {self.address}"
 
 
 class OrderItem(models.Model):
-    created_at = models.DateTimeField(
-        verbose_name='создан',
-        auto_now_add=True,
-        db_index=True
-    )
-
-    customer = models.ForeignKey(
-        Customer,
+    order = models.ForeignKey(
+        Order,
         related_name='items',
-        verbose_name='Клиент',
+        verbose_name='Заказ',
         on_delete=models.CASCADE
     )
 
     product = models.ForeignKey(
         Product,
-        related_name="ordered_items",
         verbose_name='Продукт',
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
+        related_name="items",
     )
 
     quantity = models.PositiveIntegerField(
-        verbose_name='Количество'
-    )
-
-    status = models.CharField(
-        'Статус',
-        max_length=12,
-        blank=True
+        verbose_name='Количество',
+        validators=[MinValueValidator(1)]
     )
 
     class Meta:
-        verbose_name = 'позиция заказа'
+        verbose_name = 'Пункт заказа'
         verbose_name_plural = 'заказы'
 
     def __str__(self):
-        return f"OrderItem {self.id} for {self.customer.first_name} {self.customer.last_name}"
+        return f"OrderItem {self.product}: {self.quantity}"
