@@ -129,14 +129,8 @@ class OrderAdmin(admin.ModelAdmin):
         OrderItemInline
     ]
     list_display = [
-        'first_name',
-        'last_name',
+        'firstname',
+        'lastname',
         'address',
     ]
 
-
-# @admin.register(OrderItem)
-# class OrderItemAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'order',
-#     )
