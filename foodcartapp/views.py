@@ -81,7 +81,7 @@ def register_order(request):
     serializer = OrderSerializer(data=request.data)
     if serializer.is_valid():
 
-    # Получаем или создаем клиента(заказ)
+        # Получаем или создаем клиента(заказ)
         order_data = {
             'firstname': serializer.validated_data['firstname'],
             'lastname': serializer.validated_data['lastname'],
