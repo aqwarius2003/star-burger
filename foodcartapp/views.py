@@ -96,8 +96,8 @@ def register_order(request):
         products = [OrderItem(order=order, **fields) for fields in products_fields]
 
         OrderItem.objects.bulk_create(products)
-
+        # Возвращаем данные о заказе
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
-    # Возвращаем номер ошибки и сообщение об ошибке
+        # Возвращаем номер ошибки и сообщение об ошибке
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
