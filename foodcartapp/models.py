@@ -130,7 +130,7 @@ class OrderManager(models.Manager):
     def get_total_price(self):
         return self.annotate(
             total_price=models.Sum(
-                F('items__product__price') * F('items__quantity')
+                F('items__price') * F('items__quantity')
             )
         )
 
@@ -139,7 +139,6 @@ class Order(models.Model):
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=25,
-
     )
 
     lastname = models.CharField(
@@ -185,6 +184,14 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(
         verbose_name='Количество',
         validators=[MinValueValidator(1)]
+    )
+
+    price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name='Цена',
+        default=0
     )
 
     class Meta:
