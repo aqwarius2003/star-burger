@@ -14,7 +14,8 @@
    <table class="table table-responsive">
     <tr>
       <th>ID заказа</th>
-      <th>Стоимоть заказа</th>
+      <th>Статус</th>
+      <th>Стоимоcть заказа</th>
       <th>Клиент</th>
       <th>Телефон</th>
       <th>Адрес доставки</th>
@@ -22,20 +23,23 @@
     </tr>
 
     {% for order in orders %}
-      <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.total_price }}</td>
-        <td>{{ order.firstname }}{{ order.lastname }}</td>
-        <td>{{ order.phonenumber }}</td>
-        <td>{{ order.address }}</td>
-        <td>
-          <a href="{%url 'admin:foodcartapp_order_change' order.id %}?next={{ request.path | urlencode }}">
-            Редактировать
-          </a>
-        </td>
+      {% if order.status not in excluded_statuses %}
+        <tr>
+          <td>{{ order.id }}</td>
+          <th>{{ order.get_status_display }}</th>
+          <td>{{ order.total_price }}</td>
+          <td>{{ order.firstname }}{{ order.lastname }}</td>
+          <td>{{ order.phonenumber }}</td>
+          <td>{{ order.address }}</td>
+          <td>
+            <a href="{%url 'admin:foodcartapp_order_change' order.id %}?next={{ request.path | urlencode }}">
+              Редактировать
+            </a>
+          </td>
 
-        </td>
-      </tr>
+          </td>
+        </tr>
+      {% endif %}
     {% endfor %}
 
          {% for item in order_items %}

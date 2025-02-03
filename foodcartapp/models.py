@@ -136,6 +136,19 @@ class OrderManager(models.Manager):
 
 
 class Order(models.Model):
+    UNPROCESSING = 'new'
+    PROCESSING = 'prc'
+    IN_DELEVERY = 'ind'
+    ORDER_CLOSED = 'cls'
+    ORDER_CANCELED = 'cnc'
+    STATUS_CHOICES = [
+        (UNPROCESSING, 'Необработанный'),
+        (PROCESSING, 'Готовится'),
+        (IN_DELEVERY, 'В доставке'),
+        (ORDER_CLOSED, 'Заказ закрыт'),
+        (ORDER_CANCELED, 'Заказ отменен')
+    ]
+
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=25,
@@ -156,7 +169,16 @@ class Order(models.Model):
         max_length=120
     )
 
+    status = models.CharField(
+        max_length=3,
+        verbose_name='Статус',
+        choices=STATUS_CHOICES,
+        default=UNPROCESSING,
+        db_index=True
+    )
+
     price = OrderManager()
+
 
     class Meta:
         verbose_name = 'заказчик'
