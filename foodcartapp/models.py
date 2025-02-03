@@ -177,6 +177,13 @@ class Order(models.Model):
         db_index=True
     )
 
+    comments = models.TextField(
+        verbose_name='Комментарии',
+        blank=True,
+        null=True,
+        max_length=200,
+    )
+
     price = OrderManager()
 
 
