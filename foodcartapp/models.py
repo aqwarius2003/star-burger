@@ -150,6 +150,13 @@ class Order(models.Model):
         (ORDER_CANCELED, 'Заказ отменен')
     ]
 
+    PAYMENT_METHODS = [
+        ('card', 'Электронно'),
+        ('cash', 'Наличные'),
+    ]
+
+    objects = OrderManager()
+
     firstname = models.CharField(
         verbose_name='Имя',
         max_length=25,
@@ -168,6 +175,14 @@ class Order(models.Model):
     address = models.CharField(
         'Адрес доставки',
         max_length=120
+    )
+
+    payment_method = models.CharField(
+        verbose_name="Способ оплаты",
+        choices=PAYMENT_METHODS,
+        max_length=4,
+        default='card',
+        db_index=True
     )
 
     registered_at = models.DateTimeField(
