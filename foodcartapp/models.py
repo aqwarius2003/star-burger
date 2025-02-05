@@ -212,8 +212,15 @@ class Order(models.Model):
         default=''
     )
 
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Ресторан',
+        related_name='orders',
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
     price = OrderManager()
-
 
     class Meta:
         verbose_name = 'заказчик'

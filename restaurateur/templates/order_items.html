@@ -20,6 +20,7 @@
       <th>Клиент</th>
       <th>Телефон</th>
       <th>Адрес доставки</th>
+      <th>Ресторан</th>
       <th>Комментарий</th>
       <th>Ссылка на админку</th>
     </tr>
@@ -31,16 +32,40 @@
           <th>{{ order.get_status_display }}</th>
           <th>{{ order.get_payment_method_display}}</th>
           <td>{{ order.total_price }}</td>
-          <td>{{ order.firstname }}{{ order.lastname }}</td>
+          <td>{{ order.firstname }} {{ order.lastname }}</td>
           <td>{{ order.phonenumber }}</td>
           <td>{{ order.address }}</td>
+          <td>
+            {% if order.restaurant %}
+                Готовит {{ order.restaurant.name }}
+            {% else %}
+                {% for order_id, restaurants in available_restaurants_data %}
+                    {% if order_id == order.id %}
+                        {% if restaurants %}
+                            {% if restaurants|length > 1 %}
+                                <details>
+                                    <summary>Можно приготовить в ▼▼▼ </summary>
+                                        {% for restaurant in restaurants %}
+                                          <p> <li> {{ restaurant.name }} </p>
+                                        {% endfor %}
+                                </details>
+                            {% else %}
+                                Может приготовить {{ restaurants.0.name }}
+                            {% endif %}
+                        {% else %}
+                            Нет ресторанов
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+          </td>
+
+
           <td>{{ order.comments }}</td>
           <td>
             <a href="{%url 'admin:foodcartapp_order_change' order.id %}?next={{ request.path | urlencode }}">
               Редактировать
             </a>
-          </td>
-
           </td>
         </tr>
       {% endif %}

@@ -4,6 +4,8 @@ from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.db import models
+from django.db.models import Count, Q
 
 from .models import (
     Order,
@@ -157,3 +159,30 @@ class OrderAdmin(admin.ModelAdmin):
         else:
             return res
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "restaurant":
+            # Получаем ID товаров из запроса (если они уже добавлены в заказ)
+            order_id = request.resolver_match.kwargs.get('object_id')
+            if order_id:
+                order = Order.objects.get(pk=order_id)
+                product_ids = order.items.values_list('product_id', flat=True)
+            else:
+                # Если это новый заказ, то пока нет товаров
+                product_ids = []
+
+            # Если есть товары в заказе, фильтруем рестораны
+            if product_ids:
+                # Получаем рестораны, у которых есть *все* товары из заказа в меню *и* они доступны
+                available_restaurants = Restaurant.objects.annotate(
+                    num_matching_products=Count(
+                        'menu_items',
+                        filter=Q(menu_items__product_id__in=product_ids) & Q(menu_items__availability=True)
+                    )
+                ).filter(num_matching_products=len(product_ids)).distinct()
+
+                kwargs["queryset"] = available_restaurants
+            else:
+                # Если товаров нет, показываем все рестораны
+                kwargs["queryset"] = Restaurant.objects.all()
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)

@@ -2,6 +2,7 @@ from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
+from django.db.models import Count, Q, Sum, F
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
@@ -89,15 +90,32 @@ def view_restaurants(request):
     })
 
 
-@user_passes_test(is_manager, login_url='restaurateur:login')
+@user_passes_test(lambda user: user.is_staff, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.price.get_total_price()
-    excluded_statuses = ['cls', 'cnc']
-    return render(
-        request,
-        template_name='order_items.html',
-        context={
-            'orders': orders,
-            'excluded_statuses': excluded_statuses
-        }
+    orders = Order.objects.all().annotate(
+        total_price=Sum(F('items__price') * F('items__quantity'))
     )
+    available_restaurants_data = []
+
+    for order in orders:
+        if order.restaurant:
+            available_restaurants = [order.restaurant]
+            order.status = Order.PROCESSING
+            order.save()
+        else:
+            product_ids = order.items.values_list('product_id', flat=True)
+            available_restaurants = Restaurant.objects.annotate(
+                num_matching_products=Count(
+                    'menu_items',
+                    filter=Q(menu_items__product_id__in=product_ids) & Q(menu_items__availability=True)
+                )
+            ).filter(num_matching_products=len(product_ids)).distinct() if product_ids else Restaurant.objects.all()
+
+        available_restaurants_data.append((order.id, available_restaurants))
+
+    context = {
+        'orders': orders,
+        'excluded_statuses': ['cls', 'cnc'],
+        'available_restaurants_data': available_restaurants_data,
+    }
+    return render(request, 'order_items.html', context)
