@@ -36,30 +36,33 @@
           <td>{{ order.phonenumber }}</td>
           <td>{{ order.address }}</td>
           <td>
-            {% if order.restaurant %}
-                Готовит {{ order.restaurant.name }}
-            {% else %}
-                {% for order_id, restaurants in available_restaurants_data %}
-                    {% if order_id == order.id %}
-                        {% if restaurants %}
-                            {% if restaurants|length > 1 %}
-                                <details>
-                                    <summary>Можно приготовить в ▼▼▼ </summary>
-                                        {% for restaurant in restaurants %}
-                                          <p> <li> {{ restaurant.name }} </p>
-                                        {% endfor %}
-                                </details>
-                            {% else %}
-                                Может приготовить {{ restaurants.0.name }}
-                            {% endif %}
-                        {% else %}
-                            Нет ресторанов
-                        {% endif %}
+    {% if order.restaurant %}
+        Готовит {{ order.restaurant.name }}
+    {% else %}
+        {% for order_id, restaurant_distances in available_restaurants_data %}
+            {% if order_id == order.id %}
+                {% if restaurant_distances %}
+                    {% if restaurant_distances|length > 1 %}
+                        <details>
+                            <summary>Можно приготовить в ▼▼▼ </summary>
+                            <ul>
+                                {% for restaurant in restaurant_distances %}
+                                    <li>{{ restaurant.name }} - {{ restaurant.distance }} км</li>
+                                {% endfor %}
+                            </ul>
+                        </details>
+                    {% else %}
+                        Может приготовить {{ restaurant_distances.0.name }}
                     {% endif %}
-                {% endfor %}
+                {% else %}
+                    Координаты не определены
+                    Нет ресторанов
+                {% endif %}
             {% endif %}
-          </td>
+        {% endfor %}
+    {% endif %}
 
+          </td>
 
           <td>{{ order.comments }}</td>
           <td>

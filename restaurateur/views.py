@@ -1,14 +1,18 @@
+import requests
 from django import forms
-from django.shortcuts import redirect, render
-from django.views import View
-from django.urls import reverse_lazy
-from django.db.models import Count, Q, Sum, F
-from django.contrib.auth.decorators import user_passes_test
-
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Count, Q, Sum, F
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+
+from requests import RequestException
 
 from foodcartapp.models import Product, Restaurant, Order
+from geopy.distance import distance
 
 
 class Login(forms.Form):
@@ -63,6 +67,24 @@ def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
 
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_products(request):
     restaurants = list(Restaurant.objects.order_by('name'))
@@ -97,7 +119,18 @@ def view_orders(request):
     )
     available_restaurants_data = []
 
+    # Определяем координаты каждого ресторана, сохраняем в переменной
+    restaurants = Restaurant.objects.all()
+    restaurant_coordinates = {}
+    for restaurant in restaurants:
+        location = fetch_coordinates(
+            settings.YANDEX_GEOCODER_API_KEY,
+            restaurant.address)
+        if location:
+            restaurant_coordinates[restaurant.id] = location[1], location[0]
+
     for order in orders:
+        restaurant_distances = []
         if order.restaurant:
             available_restaurants = [order.restaurant]
             order.status = Order.PROCESSING
@@ -111,7 +144,30 @@ def view_orders(request):
                 )
             ).filter(num_matching_products=len(product_ids)).distinct() if product_ids else Restaurant.objects.all()
 
-        available_restaurants_data.append((order.id, available_restaurants))
+        try:
+            customer_coordinates = fetch_coordinates(settings.YANDEX_GEOCODER_API_KEY, order.address)
+            if customer_coordinates:
+                customer_coordinates_lon_lat = (customer_coordinates[1],
+                                                customer_coordinates[0])
+
+                for restaurant in available_restaurants:
+                    restaurant_distance_value = round(distance(
+                        customer_coordinates_lon_lat,
+                        restaurant_coordinates[restaurant.id]).km, 2)
+
+                    restaurant_distances.append({
+                        'name': restaurant.name,
+                        'distance': restaurant_distance_value
+                    })
+                restaurant_distances.sort(key=lambda x: x['distance'])
+                order.restaurant_distances = restaurant_distances
+        except RequestException:
+            print('Ошибка при определении координат')
+
+        if restaurant_distances:
+            available_restaurants_data.append(
+                (order.id, restaurant_distances)
+            )
 
     context = {
         'orders': orders,
