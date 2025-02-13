@@ -4,7 +4,7 @@ from django.utils import timezone
 
 class Place(models.Model):
     address = models.CharField(
-        verbose_name='Адрес', max_length=200, unique=True
+        verbose_name='Адрес', max_length=200, unique=True, db_index=True
     )
     longitude = models.DecimalField(
         verbose_name='Долгота', max_digits=9, decimal_places=6, null=True, blank=True

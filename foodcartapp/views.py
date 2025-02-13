@@ -1,14 +1,13 @@
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-
-from .models import (Product, Order, OrderItem)
 from rest_framework.serializers import ModelSerializer
-from rest_framework import serializers
-from django.db import transaction
+
+from .models import Order, OrderItem, Product
 
 
 class OrderItemSerializer(ModelSerializer):
