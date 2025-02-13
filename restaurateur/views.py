@@ -14,8 +14,8 @@ from foodcartapp.models import Order, Product, Restaurant
 from foodcartapp.serializers import process_orders, process_restaurants
 from places.models import Place
 
-
 logger = logging.getLogger(__name__)
+
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -112,7 +112,7 @@ def view_orders(request):
     available_restaurants_data = process_orders(orders, restaurant_coordinates, place_map, api_key)
 
     context = {
-        'orders': orders,
+        'orders': orders.order_by('status'),
         'excluded_statuses': ['cls', 'cnc'],
         'available_restaurants_data': available_restaurants_data,
     }
