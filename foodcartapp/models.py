@@ -207,9 +207,7 @@ class Order(models.Model):
     comments = models.TextField(
         verbose_name='Комментарии',
         blank=True,
-        null=True,
-        max_length=200,
-        default=''
+        max_length=200
     )
 
     restaurant = models.ForeignKey(
@@ -218,7 +216,6 @@ class Order(models.Model):
         related_name='orders',
         on_delete=models.CASCADE,
         blank=True,
-        null=True
     )
     price = OrderManager()
 
@@ -254,8 +251,7 @@ class OrderItem(models.Model):
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        verbose_name='Цена',
-        default=0
+        verbose_name='Цена'
     )
 
     class Meta:
