@@ -89,8 +89,6 @@ def process_restaurants(restaurants, place_map, api_key):
 
 def get_available_restaurants(order):
     if order.restaurant:
-        # Если у заказа уже есть ресторан, устанавливаем статус "Готовится"
-        order.status = Order.PROCESSING
         return [order.restaurant]
     else:
         # Если ресторан не выбран, ищем подходящие рестораны

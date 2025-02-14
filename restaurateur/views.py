@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
@@ -98,7 +98,10 @@ def view_restaurants(request):
 
 @user_passes_test(lambda user: user.is_staff, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.select_related('restaurant').prefetch_related('items').annotate(
+
+    orders = Order.objects.filter(
+        ~Q(status__in=['cls', 'cnc'])  # Исключаем закрытые и отмененные заказы
+    ).select_related('restaurant').prefetch_related('items').annotate(
         total_price=Sum(F('items__price') * F('items__quantity'))
     )
 

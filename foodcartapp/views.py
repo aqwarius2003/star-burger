@@ -92,10 +92,12 @@ def register_order(request):
 
         order, created = Order.objects.get_or_create(**order_data)
 
-        # Создаем элементы заказа напрямую, используя ID продуктов из заказа
+        # Создаем элементы заказа с указанием цены
         products_fields = serializer.validated_data['products']
-        products = [OrderItem(order=order, **fields) for fields in products_fields]
-
+        products = [
+            OrderItem(order=order, product=fields['product'], quantity=fields['quantity'], price=fields['product'].price)
+            for fields in products_fields
+        ]
         OrderItem.objects.bulk_create(products)
         # Возвращаем данные о заказе
         return Response(serializer.data, status=status.HTTP_201_CREATED)

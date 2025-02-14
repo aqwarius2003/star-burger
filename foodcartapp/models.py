@@ -216,6 +216,7 @@ class Order(models.Model):
         related_name='orders',
         on_delete=models.CASCADE,
         blank=True,
+        null=True,
     )
     price = OrderManager()
 
