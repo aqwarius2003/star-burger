@@ -32,22 +32,28 @@ class OrderSerializer(serializers.ModelSerializer):
         # Извлекаем продукты из validated_data, чтобы передать их отдельно
         products_data = validated_data.pop('products')
 
-        # Используем super().create() для создания объекта Order без поля 'products'
-        order = super().create(validated_data)
+        # Используем super() для создания объекта Order без поля 'products'
+        order = super(OrderSerializer, self).create(validated_data)
 
-        # Создаем элементы заказа, добавляя цену из каждого продукта
+        # Создаем элементы заказа (OrderItem) с привязкой к заказу
         order_items = []
         for product_data in products_data:
             product = product_data['product']
             price = product.price  # Получаем цену из модели Product
             order_item = OrderItem(order=order, price=price, **product_data)
             order_items.append(order_item)
+
+        # Создаем все элементы заказа за один запрос
         OrderItem.objects.bulk_create(order_items)
 
-        # Создание или обновление Place
-        Place.objects.update_or_create(
-            address=order.address, defaults={"create_date": timezone.now()}
-        )
+        # Обновляем или создаем Place (адрес)
+        try:
+            Place.objects.update_or_create(
+                address=order.address, defaults={"create_date": timezone.now()}
+            )
+        except Exception as e:
+            logger.error(f"Ошибка при обновлении или создании места для адреса {order.address}: {str(e)}")
+
         return order
 
 

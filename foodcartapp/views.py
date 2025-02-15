@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
@@ -8,20 +10,15 @@ from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 
 from .models import Order, OrderItem, Product
+from .serializers import OrderSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class OrderItemSerializer(ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['product', 'quantity']
-
-
-class OrderSerializer(serializers.ModelSerializer):
-    products = OrderItemSerializer(many=True, allow_empty=False)
-
-    class Meta:
-        model = Order
-        fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
 
 def banners_list_api(request):
@@ -80,27 +77,15 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
+
     if serializer.is_valid():
-
-        # Получаем или создаем клиента(заказ)
-        order_data = {
-            'firstname': serializer.validated_data['firstname'],
-            'lastname': serializer.validated_data['lastname'],
-            'phonenumber': serializer.validated_data['phonenumber'],
-            'address': serializer.validated_data['address']
-        }
-
-        order, created = Order.objects.get_or_create(**order_data)
-
-        # Создаем элементы заказа с указанием цены
-        products_fields = serializer.validated_data['products']
-        products = [
-            OrderItem(order=order, product=fields['product'], quantity=fields['quantity'], price=fields['product'].price)
-            for fields in products_fields
-        ]
-        OrderItem.objects.bulk_create(products)
-        # Возвращаем данные о заказе
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            # Сохраняем заказ, вызывая .save() в сериализаторе
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Ошибка при сохранении заказа: {str(e)}")
+            return Response({"detail": "Произошла ошибка при сохранении заказа."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        # Возвращаем номер ошибки и сообщение об ошибке
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
