@@ -77,15 +77,6 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
-
-    if serializer.is_valid():
-        try:
-            # Сохраняем заказ, вызывая .save() в сериализаторе
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logger.error(f"Ошибка при сохранении заказа: {str(e)}")
-            return Response({"detail": "Произошла ошибка при сохранении заказа."},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
