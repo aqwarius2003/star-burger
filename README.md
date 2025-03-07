@@ -148,7 +148,85 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 - `ROLLBAR_ACCESS_TOKEN` - токен Rollbar. Получить можно на официальном [сайте](https://rollbar.com/)
-- `ROLLBAR_ENVIRONMENT` - название окружения Rollbar. По умолчанию `production`.
+- `ROLLBAR_ENVIRONMENT` - название окружения Rollbar. По умолчанию `production`
+- `DATABASE_URL` — URL для подключения к PostgreSQL в формате:
+  `postgresql://<пользователь>:<пароль>@<хост>:<порт>/<название_базы>`
+
+
+## Рекомендации
+Для production-среды рекомендуется использовать PostgreSQL как надежное и масштабируемое решение для работы с данными.
+
+
+## Установка и настройка PostgreSQL
+
+1. Установите необходимые компоненты:
+```bash
+sudo apt install postgresql postgresql-contrib
+```
+
+```bash
+sudo su - postgres
+psql
+
+-- Создание базы данных
+CREATE DATABASE mydb_name;
+
+-- Создание пользователя с правами
+CREATE USER mydb_user WITH PASSWORD 'password';
+
+-- Настройка параметров пользователя
+ALTER ROLE mydb_user SET client_encoding TO 'utf8';
+ALTER ROLE mydb_user SET default_transaction_isolation TO 'read committed';
+ALTER ROLE mydb_user SET timezone TO 'UTC';
+
+-- Выдача привилегий (для версий PostgreSQL <15)
+GRANT ALL PRIVILEGES ON DATABASE mydb_name TO mydb_user;
+
+-- Для версий 15+
+\connect mydb_name;
+CREATE SCHEMA myschema AUTHORIZATION mydb_user; -- Замените 'myschema' на нужное название
+
+-- Выход из консоли
+\q
+exit
+```
+
+### Миграция данных
+
+Экспортируйте данные из SQLite в JSON:
+
+```bash
+python3 manage.py dumpdata --exclude contenttypes > starburger_db.json
+```
+Обновите конфигурацию в settings.py:
+
+```python
+
+DATABASES = {
+    'default': dj_database_url.parse(DATABASE_URL)
+}
+
+# Для версий PostgreSQL 15+ укажите схему
+DATABASES['default']['OPTIONS'] = {
+    'options': '-c search_path=starburger_db_schema'  # Замените на ваше название схемы
+}
+```
+
+Примените миграции и загрузите данные:
+
+```bash
+
+python3 manage.py migrate
+python3 manage.py loaddata starburger_db.json
+```
+Примечания
+
+- Для работы с dj_database_url убедитесь, что пакет установлен:
+```pip install dj-database-url```
+- Сохраните актуальные параметры подключения в переменных окружения
+- Убедитесь, что название схемы совпадает с указанным при создании
+
+
 
 ## Цели проекта
 
