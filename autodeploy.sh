@@ -50,7 +50,8 @@ systemctl reload nginx
 echo "Перезагрузка Gunicorn..."
 systemctl restart gunicorn
 
-source star_burger/.env
+source .env
+
 # Отправляем уведомление в Rollbar о успешном деплое
 echo "Отправка уведомления в Rollbar..."
 curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
