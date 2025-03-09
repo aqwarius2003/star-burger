@@ -55,7 +55,7 @@ curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
            "environment": "production",
            "revision": "'"$(git rev-parse HEAD)"'",
            "rollbar_name": "star_burger",
-           "local_username": "root",
+           "local_username": "00victorr",
            "status": "succeeded"
          }'
 
