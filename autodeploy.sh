@@ -45,6 +45,11 @@ python manage.py migrate --noinput
 # Перезагружаем Nginx
 echo "Перезагрузка Nginx..."
 systemctl reload nginx
+
+# Перезагружаем Gunicorn
+echo "Перезагрузка Gunicorn..."
+systemctl reload gunicorn
+
 source star_burger/.env
 # Отправляем уведомление в Rollbar о успешном деплое
 echo "Отправка уведомления в Rollbar..."
@@ -59,10 +64,12 @@ curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
            "status": "succeeded"
          }'
 
-echo "Деплой завершен успешно!"
-
 # Деактивируем виртуальное окружение
 echo "Деактивация виртуального окружения..."
 deactivate
 
+# Делаем запускаемым скрипт на будущий запуск
+echo "Делаем запускаемый скрипт на будущий запуск..."
+chmod +x autodeploy.sh
 
+echo "Деплой завершен успешно!"
