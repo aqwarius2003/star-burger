@@ -48,7 +48,7 @@ systemctl reload nginx
 
 # Перезагружаем Gunicorn
 echo "Перезагрузка Gunicorn..."
-systemctl reload gunicorn
+systemctl restart gunicorn
 
 source star_burger/.env
 # Отправляем уведомление в Rollbar о успешном деплое
