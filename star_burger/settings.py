@@ -101,7 +101,7 @@ DATABASES = {
 }
 
 DATABASES['default']['OPTIONS'] = {
-    'options': '-c search_path=db_schema'
+    'options': '-c search_path=starburger_db_schema'
 }
 
 AUTH_PASSWORD_VALIDATORS = [
