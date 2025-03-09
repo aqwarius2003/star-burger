@@ -45,7 +45,7 @@ python manage.py migrate --noinput
 # Перезагружаем Nginx
 echo "Перезагрузка Nginx..."
 systemctl reload nginx
-
+source star_burger/.env
 # Отправляем уведомление в Rollbar о успешном деплое
 echo "Отправка уведомления в Rollbar..."
 curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
