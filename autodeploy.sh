@@ -69,8 +69,4 @@ curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
 echo "Деактивация виртуального окружения..."
 deactivate
 
-# Делаем запускаемым скрипт на будущий запуск
-echo "Делаем запускаемый скрипт на будущий запуск..."
-chmod +x autodeploy.sh
-
 echo "Деплой завершен успешно!"

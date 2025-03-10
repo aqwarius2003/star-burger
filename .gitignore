@@ -143,6 +143,7 @@ cython_debug/
 
 .parcel-cache/
 .idea/
+staticfiles/
 starburger_db.json
 clearsessions.sh
 autodeploy.sh
